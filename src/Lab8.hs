@@ -36,7 +36,9 @@ e7 :: Expr (String, Int)
 e7 = Add e6 e6
 
 instance Foldable Expr where
-    foldr = undefined
+    foldr f acc (Var x) = f x acc
+    foldr f acc (Val x) = acc
+    foldr f acc (Add x y) = foldr f (foldr f acc y) x
 
 --------------------------------------------------------------------------------
 
@@ -44,19 +46,21 @@ data Zipper a = Zipper [a] a [a]
     deriving (Eq, Show)
 
 fromList :: [a] -> Zipper a
-fromList = undefined
+fromList (x:xs) = Zipper [] x xs
 
 view :: Zipper a -> a
-view = undefined
+view (Zipper xs y zs) = y
 
 left :: Zipper a -> Zipper a
-left = undefined
+left p@(Zipper xs y []) = p
+left (Zipper xs y (z:zs)) = Zipper (y:xs) z zs
 
 right :: Zipper a -> Zipper a
-right = undefined
+right p@(Zipper [] y zs) = p
+right (Zipper (x:xs) y zs) = Zipper xs x (y:zs)
 
 instance Foldable Zipper where
-    foldr = undefined
+    foldr f acc (Zipper xs y zs) = foldr f (f y (foldr f acc zs)) xs
 
 --------------------------------------------------------------------------------
 
@@ -64,11 +68,11 @@ instance Foldable Zipper where
 -- data structures which have an instance of `Foldable`. That is, `filterF`
 -- @p xs@ reduces @xs@ to a list of elements which satisfy the predicate @p@.
 filterF :: Foldable f => (a -> Bool) -> f a -> [a]
-filterF = undefined
+filterF f items = filter f $ toList items
 
 -- | `asum` @xs@ combines all computations in @xs@ as alternatives in one big
 -- computation of type @f a@.
 asum :: (Alternative f, Foldable t) => t (f a) -> f a
-asum = undefined
+asum xs = foldr (<|>) empty xs
 
 --------------------------------------------------------------------------------
